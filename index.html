@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase vs Investment Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .input-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-add {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: #0056b3;
+        }
+        
+        .purchases-section {
+            margin-bottom: 30px;
+        }
+        
+        .purchases-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .purchase-item {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9ecef;
+        }
+        
+        .purchase-info {
+            color: #333;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+            min-height: 400px;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                min-height: 500px;
+                padding: 15px;
+            }
+        }
+        
+        .rate-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .rate-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .rate-label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .rate-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .rate-btn:hover {
+            background: #0056b3;
+        }
+        
+        .rate-display {
+            font-weight: 600;
+            color: #007bff;
+            min-width: 50px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .rate-explanation {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .input-section {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .chart-container {
+                min-height: 500px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Purchase vs Investment Tracker</h1>
+            <p>Compare your spending to potential investment returns</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="purchaseName">Purchase Name</label>
+                    <input type="text" id="purchaseName" placeholder="Coffee, Netflix, etc.">
+                </div>
+                <div class="input-group">
+                    <label for="purchaseAmount">Amount ($)</label>
+                    <input type="number" id="purchaseAmount" placeholder="5.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label for="cadenceDays">Every N Days</label>
+                    <input type="number" id="cadenceDays" placeholder="1" min="1">
+                </div>
+                <div class="input-group">
+                    <button class="btn btn-add" onclick="addPurchase()">Add Purchase</button>
+                </div>
+            </div>
+            
+            <div class="purchases-section">
+                <h3>Your Purchases</h3>
+                <div id="purchasesList">
+                    <div class="empty-state">No purchases added yet</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+            
+            <div class="rate-section">
+                <div class="rate-control">
+                    <span class="rate-label">S&P 500 Annual Return:</span>
+                    <button class="rate-btn" onclick="changeRate(-0.5)">-</button>
+                    <span class="rate-display"><span id="rateDisplay">7.0</span>%</span>
+                    <button class="rate-btn" onclick="changeRate(0.5)">+</button>
+                </div>
+                <div class="rate-explanation">
+                    This is the assumed annual return rate for S&P 500 investments. The historical average is around 7-10% after inflation. 
+                    Adjust this rate to see how different market performance would affect your potential investment returns over time.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let purchases = [
+            { name: "Coffee", amount: 5.00, cadence: 3 }
+        ];
+        let investmentRate = 7.0;
+        let chart = null;
+
+        function addPurchase() {
+            const name = document.getElementById('purchaseName').value;
+            const amount = parseFloat(document.getElementById('purchaseAmount').value);
+            const cadence = parseInt(document.getElementById('cadenceDays').value);
+
+            if (!name || !amount || !cadence) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            purchases.push({ name, amount, cadence });
+            
+            // Clear inputs
+            document.getElementById('purchaseName').value = '';
+            document.getElementById('purchaseAmount').value = '';
+            document.getElementById('cadenceDays').value = '';
+
+            updateDisplay();
+        }
+
+        function removePurchase(index) {
+            purchases.splice(index, 1);
+            updateDisplay();
+        }
+
+        function changeRate(delta) {
+            investmentRate = Math.max(0, Math.min(20, investmentRate + delta));
+            document.getElementById('rateDisplay').textContent = investmentRate.toFixed(1);
+            updateChart();
+        }
+
+        function updateDisplay() {
+            updatePurchasesList();
+            updateChart();
+        }
+
+        function updatePurchasesList() {
+            const listContainer = document.getElementById('purchasesList');
+            
+            if (purchases.length === 0) {
+                listContainer.innerHTML = '<div class="empty-state">No purchases added yet</div>';
+                return;
+            }
+
+            listContainer.innerHTML = purchases.map((purchase, index) => `
+                <div class="purchase-item">
+                    <div class="purchase-info">
+                        ${purchase.name}: $${purchase.amount.toFixed(2)} every ${purchase.cadence} day${purchase.cadence !== 1 ? 's' : ''}
+                    </div>
+                    <button class="remove-btn" onclick="removePurchase(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function calculateData() {
+            if (purchases.length === 0) return { labels: [], spendingData: [], investmentData: [] };
+
+            const timelineYears = 60;
+            const labels = [];
+            const spendingData = [];
+            const investmentData = [];
+
+            for (let year = 0; year <= timelineYears; year++) {
+                labels.push(year === 0 ? 'Start' : `Year ${year}`);
+                
+                let totalSpent = 0;
+                let totalInvested = 0;
+                
+                purchases.forEach(purchase => {
+                    const daysElapsed = year * 365;
+                    const purchaseCount = Math.floor(daysElapsed / purchase.cadence);
+                    
+                    // Total spent
+                    totalSpent += purchaseCount * purchase.amount;
+                    
+                    // Investment growth calculation
+                    const annualRate = investmentRate / 100;
+                    for (let i = 0; i < purchaseCount; i++) {
+                        const yearsInvested = year - (i * purchase.cadence / 365);
+                        if (yearsInvested > 0) {
+                            totalInvested += purchase.amount * Math.pow(1 + annualRate, yearsInvested);
+                        }
+                    }
+                });
+                
+                spendingData.push(totalSpent);
+                investmentData.push(totalInvested);
+            }
+
+            return { labels, spendingData, investmentData };
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            const data = calculateData();
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Money Spent',
+                            data: data.spendingData,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            borderWidth: 2
+                        },
+                        {
+                            label: `S&P 500 Investment (${investmentRate}%)`,
+                            data: data.investmentData,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Spending vs Investment Growth Over Time',
+                            font: { size: 16, weight: '500' },
+                            color: '#333',
+                            padding: 20
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { size: 12 },
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Initialize empty chart and display
+        updateDisplay();
+    </script>
+</body>
+</html>
